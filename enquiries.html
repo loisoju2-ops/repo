@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Enquiries · ADC</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:'Poppins',sans-serif; background:#f5f7f6; color:#1f2e2b; line-height:1.5; min-height:100vh; }
+    a { text-decoration:none; color:inherit; }
+    button { font-family:'Poppins',sans-serif; cursor:pointer; border:none; }
+
+    .topbar {
+      background:#fff; border-bottom:1px solid #dfe7e4;
+      padding:16px 28px; display:flex; align-items:center; gap:14px;
+      position:sticky; top:0; z-index:100;
+    }
+    .logo-icon {
+      width:40px; height:40px; background:#0f6b3e; color:#fff;
+      border-radius:12px; display:flex; align-items:center; justify-content:center;
+      font-weight:700; font-size:1.05rem;
+    }
+    .topbar-title { font-weight:600; font-size:.95rem; }
+    .topbar-title span { display:block; font-size:.7rem; color:#4f5f5c; font-weight:400; }
+    .topbar-back {
+      margin-left:auto; padding:8px 16px; border-radius:40px;
+      background:#e6f3ec; color:#0f6b3e; font-weight:500; font-size:.85rem;
+      display:inline-flex; align-items:center; gap:6px;
+    }
+    .topbar-back:hover { background:#d3ebde; }
+
+    .wrap { max-width:760px; margin:0 auto; padding:40px 20px 60px; }
+
+    .form-card {
+      background:#fff; border-radius:16px;
+      box-shadow:0 8px 24px rgba(0,0,0,.06);
+      border:1px solid #dfe7e4; padding:36px 32px;
+    }
+    .form-header { margin-bottom:28px; padding-bottom:20px; border-bottom:1px solid #dfe7e4; }
+    .form-header h1 { font-size:1.6rem; font-weight:600; color:#1f2e2b; margin-bottom:8px; }
+    .badge {
+      display:inline-block; padding:6px 14px; border-radius:40px;
+      font-size:.78rem; font-weight:500; background:#e6f3ec; color:#0f6b3e;
+    }
+    .form-header p { color:#4f5f5c; font-size:.88rem; margin-top:10px; }
+
+    .form-row { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+    .form-group { display:flex; flex-direction:column; margin-bottom:18px; }
+    .form-group label { font-size:.85rem; font-weight:500; margin-bottom:6px; color:#1f2e2b; }
+    .form-group label .req { color:#c0392b; margin-left:3px; }
+    .form-control {
+      width:100%; padding:13px 16px; border:1.5px solid #dfe7e4;
+      border-radius:12px; font-family:'Poppins',sans-serif; font-size:.9rem;
+      background:#fefefe; transition:.2s;
+    }
+    .form-control:focus { outline:none; border-color:#0f6b3e; box-shadow:0 0 0 4px rgba(15,107,62,.08); }
+    textarea.form-control { min-height:130px; resize:vertical; }
+    select.form-control {
+      appearance:none;
+      background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%234f5f5c' stroke-width='2'><polyline points='6 9 12 15 18 9'/></svg>");
+      background-repeat:no-repeat; background-position:right 16px center; padding-right:40px;
+    }
+
+    .form-footer {
+      display:flex; justify-content:flex-end; gap:12px;
+      margin-top:24px; padding-top:20px; border-top:1px solid #dfe7e4;
+    }
+    .btn {
+      padding:12px 26px; border-radius:40px; font-weight:500; font-size:.9rem;
+      display:inline-flex; align-items:center; gap:8px; transition:.2s;
+    }
+    .btn-primary { background:#0f6b3e; color:#fff; }
+    .btn-primary:hover { background:#0b5a33; transform:translateY(-1px); }
+    .btn-outline { background:transparent; border:1.5px solid #0f6b3e; color:#0f6b3e; }
+    .btn-outline:hover { background:#e6f3ec; }
+
+    .success-card {
+      max-width:560px; margin:60px auto; background:#fff;
+      border-radius:16px; box-shadow:0 8px 24px rgba(0,0,0,.06);
+      padding:48px 32px; text-align:center; border:1px solid #dfe7e4;
+    }
+    .success-card i { font-size:3rem; color:#0f6b3e; margin-bottom:18px; }
+    .success-card h2 { font-size:1.5rem; margin-bottom:10px; color:#1f2e2b; }
+    .success-card .ref-box {
+      background:#e6f3ec; padding:16px; border-radius:12px;
+      margin:20px 0; font-size:1.1rem; font-weight:700;
+      letter-spacing:1px; color:#0f6b3e;
+    }
+    @media (max-width:560px) {
+      .form-card { padding:24px 18px; }
+      .form-row { grid-template-columns:1fr; gap:0; }
+      .form-footer { flex-direction:column; }
+      .form-footer .btn { width:100%; justify-content:center; }
+      .topbar { padding:12px 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo-icon">ADC</div>
+  <div class="topbar-title">
+    African Diaspora Channels
+    <span>Enquiries</span>
+  </div>
+  <a href="index.html" class="topbar-back"><i class="fas fa-arrow-left"></i> Back</a>
+</div>
+
+<div class="wrap">
+  <div id="pageContent"></div>
+</div>
+
+<script>
+  function generateRef(prefix) {
+    var y = new Date().getFullYear();
+    var s = Date.now().toString().slice(-8);
+    var r = Math.floor(Math.random() * 90 + 10);
+    return prefix + '-' + y + '-' + s + r;
+  }
+
+  function renderForm() {
+    var container = document.getElementById('pageContent');
+    container.innerHTML =
+      '<div class="form-card">' +
+        '<div class="form-header">' +
+          '<h1>General Enquiry</h1>' +
+          '<div class="badge"><i class="fas fa-envelope"></i> Contact the ADC Team</div>' +
+          '<p>Submit your enquiry and our team will get back to you shortly.</p>' +
+        '</div>' +
+        '<form id="enquiryForm">' +
+
+          '<div class="form-row">' +
+            '<div class="form-group">' +
+              '<label>Guest Name <span class="req">*</span></label>' +
+              '<input type="text" class="form-control" id="guestName" required>' +
+            '</div>' +
+            '<div class="form-group">' +
+              '<label>Guest Number <span class="req">*</span></label>' +
+              '<input type="text" class="form-control" id="guestNumber" required>' +
+            '</div>' +
+          '</div>' +
+
+          '<div class="form-row">' +
+            '<div class="form-group">' +
+              '<label>Guest Email <span class="req">*</span></label>' +
+              '<input type="email" class="form-control" id="guestEmail" required>' +
+            '</div>' +
+            '<div class="form-group">' +
+              '<label>Guest Phone Number <span class="req">*</span></label>' +
+              '<input type="tel" class="form-control" id="guestPhone" required>' +
+            '</div>' +
+          '</div>' +
+
+          '<div class="form-group">' +
+            '<label>Reason for Enquiry <span class="req">*</span></label>' +
+            '<select class="form-control" id="reason" required>' +
+              '<option value="">Select a reason</option>' +
+              '<option value="Adverts">Adverts</option>' +
+              '<option value="Event Coverage">Event Coverage</option>' +
+              '<option value="Partnership">Partnership</option>' +
+              '<option value="Podcast Rental">Podcast Rental</option>' +
+            '</select>' +
+          '</div>' +
+
+          '<div class="form-group">' +
+            '<label>Guest Commentary <span class="req">*</span></label>' +
+            '<textarea class="form-control" id="guestCommentary" required placeholder="Tell us more about your enquiry..."></textarea>' +
+          '</div>' +
+
+          '<div class="form-footer">' +
+            '<a href="index.html" class="btn btn-outline"><i class="fas fa-times"></i> Cancel</a>' +
+            '<button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane"></i> Submit Enquiry</button>' +
+          '</div>' +
+        '</form>' +
+      '</div>';
+
+    document.getElementById('enquiryForm').addEventListener('submit', handleSubmit);
+  }
+
+  function handleSubmit(e) {
+    e.preventDefault();
+    var name = document.getElementById('guestName').value.trim();
+    var number = document.getElementById('guestNumber').value.trim();
+    var email = document.getElementById('guestEmail').value.trim();
+    var phone = document.getElementById('guestPhone').value.trim();
+    var reason = document.getElementById('reason').value;
+    var commentary = document.getElementById('guestCommentary').value.trim();
+
+    if (!name || !number || !email || !phone || !reason || !commentary) {
+      alert('Please fill in all required fields.');
+      return;
+    }
+
+    var ref = generateRef('ADC-ENQ');
+    showSuccess(name, ref, number, email, phone, reason, commentary);
+  }
+
+  function showSuccess(name, ref, number, email, phone, reason, commentary) {
+    document.getElementById('pageContent').innerHTML =
+      '<div class="success-card">' +
+        '<i class="fas fa-check-circle"></i>' +
+        '<h2>Enquiry Submitted</h2>' +
+        '<p>Thank you, <strong>' + name + '</strong>. Your enquiry has been received.</p>' +
+        '<div class="ref-box">' + ref + '</div>' +
+        '<p style="color:#4f5f5c; font-size:.85rem; margin-top:8px;">' +
+          '<strong>Reason:</strong> ' + reason + '<br>' +
+          '<strong>Email:</strong> ' + email + ' &nbsp;·&nbsp; ' +
+          '<strong>Phone:</strong> ' + phone +
+        '</p>' +
+        '<div style="margin-top:28px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">' +
+          '<a href="index.html" class="btn btn-primary"><i class="fas fa-home"></i> Return Home</a>' +
+          '<a href="enquiries.html" class="btn btn-outline"><i class="fas fa-plus"></i> New Enquiry</a>' +
+        '</div>' +
+      '</div>';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', renderForm);
+  } else {
+    renderForm();
+  }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin · ADC</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:'Poppins',sans-serif; background:#f5f7f6; color:#1f2e2b; line-height:1.5; min-height:100vh; }
+    a { text-decoration:none; color:inherit; }
+    button { font-family:'Poppins',sans-serif; cursor:pointer; border:none; }
+    :root {
+      --green:#0f6b3e; --green-soft:#e6f3ec; --charcoal:#1f2e2b;
+      --gray-text:#4f5f5c; --border:#dfe7e4; --white:#fff;
+      --shadow-md:0 8px 24px rgba(0,0,0,.06);
+    }
+
+    /* TOPBAR */
+    .topbar {
+      background:#fff; border-bottom:1px solid var(--border);
+      padding:16px 28px; display:flex; align-items:center; gap:14px;
+      position:sticky; top:0; z-index:100;
+    }
+    .topbar-title { font-weight:600; font-size:.95rem; }
+    .topbar-title span { display:block; font-size:.7rem; color:var(--gray-text); font-weight:400; }
+    .topbar-actions { margin-left:auto; display:flex; gap:8px; flex-wrap:wrap; }
+    .topbar-btn {
+      padding:8px 16px; border-radius:40px; background:var(--green-soft); color:var(--green);
+      font-weight:500; font-size:.85rem; display:inline-flex; align-items:center; gap:6px;
+    }
+    .topbar-btn:hover { background:#d3ebde; }
+
+    .wrap { max-width:1200px; margin:0 auto; padding:40px 24px 60px; }
+
+    /* LOGIN */
+    .login-card {
+      max-width:520px; margin:40px auto; background:#fff; border-radius:16px;
+      box-shadow:var(--shadow-md); border:1px solid var(--border); padding:36px 32px;
+    }
+    .login-card .form-header { margin-bottom:28px; padding-bottom:20px; border-bottom:1px solid var(--border); }
+    .login-card .form-header h2 { font-size:1.6rem; font-weight:600; color:var(--charcoal); margin-bottom:6px; }
+    .login-card .form-header p { color:var(--gray-text); font-size:.88rem; }
+
+    /* FORM */
+    .form-group { display:flex; flex-direction:column; margin-bottom:18px; }
+    .form-group label { font-size:.85rem; font-weight:500; margin-bottom:6px; color:var(--charcoal); }
+    .form-control {
+      width:100%; padding:13px 16px; border:1.5px solid var(--border);
+      border-radius:12px; font-family:'Poppins',sans-serif; font-size:.9rem;
+      background:#fefefe; transition:.2s;
+    }
+    .form-control:focus { outline:none; border-color:var(--green); box-shadow:0 0 0 4px rgba(15,107,62,.08); }
+
+    .form-footer {
+      display:flex; justify-content:flex-end; gap:12px;
+      margin-top:24px; padding-top:20px; border-top:1px solid var(--border);
+    }
+    .btn {
+      padding:12px 26px; border-radius:40px; font-weight:500; font-size:.9rem;
+      display:inline-flex; align-items:center; gap:8px;
+    }
+    .btn-primary { background:var(--green); color:#fff; }
+    .btn-primary:hover { background:#0b5a33; }
+    .btn-outline { background:transparent; border:1.5px solid var(--green); color:var(--green); }
+    .btn-outline:hover { background:var(--green-soft); }
+
+    /* PAGE */
+    .page-header { padding:0 0 20px; }
+    .page-header h1 { font-size:1.8rem; font-weight:700; color:var(--charcoal); margin-bottom:6px; }
+    .page-header p { color:var(--gray-text); font-size:.9rem; }
+
+    /* STATS */
+    .stats-grid {
+      display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
+      gap:18px; margin-bottom:32px;
+    }
+    .stat-card {
+      background:#fff; border-radius:16px; padding:22px 18px;
+      border:1px solid var(--border); box-shadow:0 4px 12px rgba(0,0,0,.03);
+    }
+    .stat-card .stat-label { font-size:.8rem; color:var(--gray-text); margin-bottom:6px; }
+    .stat-card .stat-value { font-size:1.9rem; font-weight:700; color:var(--charcoal); }
+
+    /* TABLE */
+    .table-container {
+      background:#fff; border-radius:16px; border:1px solid var(--border);
+      overflow-x:auto; box-shadow:0 4px 12px rgba(0,0,0,.03); margin-bottom:24px;
+    }
+    table { width:100%; border-collapse:collapse; min-width:760px; }
+    th {
+      text-align:left; padding:14px; background:#f7f9f8; font-weight:600;
+      font-size:.75rem; color:var(--gray-text); text-transform:uppercase;
+      letter-spacing:.4px; border-bottom:1px solid var(--border);
+    }
+    td { padding:14px; border-bottom:1px solid #edf2f0; font-size:.85rem; }
+
+    /* TABS */
+    .tabs { display:flex; gap:8px; margin-bottom:24px; flex-wrap:wrap; }
+    .tab {
+      padding:10px 18px; border-radius:40px; background:#fff; color:var(--gray-text);
+      font-weight:500; font-size:.85rem; border:1.5px solid var(--border); cursor:pointer;
+      display:inline-flex; align-items:center; gap:6px;
+    }
+    .tab:hover { border-color:var(--green); color:var(--green); }
+    .tab.active { background:var(--green); color:#fff; border-color:var(--green); }
+
+    /* ACTION BAR */
+    .action-bar { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:20px; }
+    .action-bar .btn { padding:10px 20px; font-size:.85rem; }
+
+    /* NOTICE */
+    .notice {
+      background:#e8f0fe; border:1px solid #b6cdf5; color:#1a4d8f;
+      padding:14px 18px; border-radius:12px; margin-bottom:20px; font-size:.88rem;
+    }
+    .notice code {
+      background:#fff; padding:2px 6px; border-radius:4px; font-family:monospace;
+      color:#0f6b3e;
+    }
+
+    /* EMPTY STATE */
+    .empty {
+      text-align:center; padding:50px 20px; color:var(--gray-text);
+    }
+    .empty i { font-size:2.5rem; color:#c8d4d0; margin-bottom:12px; display:block; }
+
+    @media (max-width:600px) {
+      .login-card { padding:24px 18px; margin:20px auto; }
+      .form-footer { flex-direction:column; }
+      .form-footer .btn { width:100%; justify-content:center; }
+      .topbar { padding:12px 16px; }
+      .wrap { padding:24px 16px 40px; }
+      .page-header h1 { font-size:1.5rem; }
+      .stats-grid { grid-template-columns:1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-title">
+    African Diaspora Channels
+    <span>Admin Panel</span>
+  </div>
+  <div class="topbar-actions" id="topbarActions">
+    <a href="index.html" class="topbar-btn"><i class="fas fa-home"></i> Home</a>
+  </div>
+</div>
+
+<div class="wrap">
+  <div id="adminContent"></div>
+</div>
+
+<script>
+  // ==============================
+  // ADMIN CREDENTIALS (hardcoded for testing)
+  // ==============================
+  const ADMIN_EMAIL = 'admin@adc.com';
+  const ADMIN_PASSWORD = 'adc2026';
+
+  // ==============================
+  // LOCALSTORAGE DATA LAYER
+  // ==============================
+  const STORE = {
+    GUESTS: 'adc_guests',
+    ENQUIRIES: 'adc_enquiries',
+    SESSION: 'adc_admin_session',
+
+    getGuests() {
+      try { return JSON.parse(localStorage.getItem(this.GUESTS) || '[]'); }
+      catch { return []; }
+    },
+    getEnquiries() {
+      try { return JSON.parse(localStorage.getItem(this.ENQUIRIES) || '[]'); }
+      catch { return []; }
+    },
+    saveGuest(record) {
+      const list = this.getGuests();
+      list.unshift(record);
+      localStorage.setItem(this.GUESTS, JSON.stringify(list));
+    },
+    saveEnquiry(record) {
+      const list = this.getEnquiries();
+      list.unshift(record);
+      localStorage.setItem(this.ENQUIRIES, JSON.stringify(list));
+    },
+    setSession(on) {
+      if (on) localStorage.setItem(this.SESSION, '1');
+      else localStorage.removeItem(this.SESSION);
+    },
+    hasSession() { return localStorage.getItem(this.SESSION) === '1'; }
+  };
+
+  // Seed some sample data on first load so tables aren't empty
+  (function seed() {
+    if (!localStorage.getItem('adc_seeded')) {
+      STORE.saveGuest({
+        reference_number: 'ADC-LWC-2026-001',
+        full_name: 'Amara Okonkwo',
+        show_name: 'Lifestyle with Coco',
+        guest_age: 34,
+        profession: 'Fashion Designer',
+        guest_email: 'amara@example.com',
+        guest_phone: '+234 800 111 2222',
+        topic: 'Building a sustainable African fashion brand from Lagos to London.',
+        created_at: new Date().toISOString()
+      });
+      STORE.saveGuest({
+        reference_number: 'ADC-MBW-2026-002',
+        full_name: 'Kwame Mensah',
+        show_name: 'Morning Brew',
+        guest_age: 41,
+        profession: 'Tech Entrepreneur',
+        guest_email: 'kwame@example.com',
+        guest_phone: '+233 555 444 333',
+        topic: 'Scaling fintech startups across West Africa.',
+        created_at: new Date().toISOString()
+      });
+      STORE.saveGuest({
+        reference_number: 'ADC-GOV-2026-003',
+        full_name: 'Dr. Ngozi Adeyemi',
+        show_name: 'The Government and You',
+        guest_age: 52,
+        profession: 'Public Policy Analyst',
+        guest_email: 'ngozi@example.com',
+        guest_phone: '+234 803 999 1111',
+        topic: 'Civic engagement and the role of the diaspora in policy.',
+        created_at: new Date().toISOString()
+      });
+      STORE.saveEnquiry({
+        reference_number: 'ADC-ENQ-2026-004',
+        full_name: 'Tunde Balogun',
+        guest_number: 'ENQ-1001',
+        email: 'tunde@example.com',
+        phone: '+234 802 333 4444',
+        reason: 'Partnership',
+        commentary: 'We would like to partner on a diaspora-focused documentary series.',
+        created_at: new Date().toISOString()
+      });
+      localStorage.setItem('adc_seeded', '1');
+    }
+  })();
+
+  // ==============================
+  // STATE
+  // ==============================
+  let isAdminLoggedIn = STORE.hasSession();
+  let currentUser = isAdminLoggedIn ? { email: ADMIN_EMAIL } : null;
+
+  // ==============================
+  // HELPERS
+  // ==============================
+  function escapeHtml(v) {
+    return String(v ?? '').replace(/[&<>'"]/g, c => ({
+      '&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'
+    }[c]));
+  }
+
+  // ==============================
+  // LOGIN SCREEN
+  // ==============================
+  function renderLogin() {
+    document.getElementById('topbarActions').innerHTML =
+      '<a href="index.html" class="topbar-btn"><i class="fas fa-home"></i> Home</a>';
+
+    document.getElementById('adminContent').innerHTML = `
+      <div class="notice">
+        <strong>Demo credentials:</strong> Email <code>${ADMIN_EMAIL}</code> · Password <code>${ADMIN_PASSWORD}</code>
+      </div>
+      <div class="login-card">
+        <div class="form-header">
+          <h2><i class="fas fa-lock"></i> Admin Login</h2>
+          <p>Sign in with your ADC staff account.</p>
+        </div>
+        <form id="loginForm">
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" class="form-control" id="adminEmail" required autocomplete="email">
+          </div>
+          <div class="form-group">
+            <label>Password</label>
+            <input type="password" class="form-control" id="adminPassword" required autocomplete="current-password">
+          </div>
+          <div id="loginError" style="display:none;color:#b91c1c;background:#fee2e2;padding:12px;border-radius:8px;margin-top:12px;"></div>
+          <div class="form-footer">
+            <a href="index.html" class="btn btn-outline"><i class="fas fa-times"></i> Cancel</a>
+            <button type="submit" class="btn btn-primary"><i class="fas fa-sign-in-alt"></i> Sign In</button>
+          </div>
+        </form>
+      </div>
+    `;
+    document.getElementById('loginForm').addEventListener('submit', handleLogin);
+  }
+
+  function handleLogin(e) {
+    e.preventDefault();
+    const errBox = document.getElementById('loginError');
+    errBox.style.display = 'none';
+
+    const email = document.getElementById('adminEmail').value.trim();
+    const password = document.getElementById('adminPassword').value;
+
+    if (email !== ADMIN_EMAIL || password !== ADMIN_PASSWORD) {
+      errBox.textContent = 'Invalid email or password.';
+      errBox.style.display = 'block';
+      return;
+    }
+
+    STORE.setSession(true);
+    isAdminLoggedIn = true;
+    currentUser = { email };
+    renderTopbarLoggedIn();
+    routeFromHash();
+  }
+
+  function logout() {
+    STORE.setSession(false);
+    isAdminLoggedIn = false;
+    currentUser = null;
+    renderTopbarLoggedOut();
+    window.location.hash = '';
+    renderLogin();
+  }
+
+  function renderTopbarLoggedOut() {
+    document.getElementById('topbarActions').innerHTML =
+      '<a href="index.html" class="topbar-btn"><i class="fas fa-home"></i> Home</a>';
+  }
+
+  function renderTopbarLoggedIn() {
+    document.getElementById('topbarActions').innerHTML =
+      '<a href="index.html" class="topbar-btn"><i class="fas fa-home"></i> Home</a>' +
+      '<button class="topbar-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>';
+  }
+
+  // ==============================
+  // ROUTING
+  // ==============================
+  function routeFromHash() {
+    if (!isAdminLoggedIn) { renderLogin(); return; }
+    const hash = (window.location.hash || '#dashboard').replace('#', '');
+    if (hash === 'guests') renderGuests();
+    else if (hash === 'enquiries') renderEnquiries();
+    else renderDashboard();
+  }
+
+  // ==============================
+  // DASHBOARD
+  // ==============================
+  function renderDashboard() {
+    const guests = STORE.getGuests();
+    const enquiries = STORE.getEnquiries();
+
+    const lwc = guests.filter(g => g.show_name === 'Lifestyle with Coco').length;
+    const mbw = guests.filter(g => g.show_name === 'Morning Brew').length;
+    const gov = guests.filter(g => g.show_name === 'The Government and You').length;
+
+    document.getElementById('adminContent').innerHTML = `
+      <div class="page-header">
+        <h1>Admin Dashboard</h1>
+        <p>Overview${currentUser?.email ? ' · ' + escapeHtml(currentUser.email) : ''}</p>
+      </div>
+
+      <div class="tabs">
+        <button class="tab active" onclick="go('dashboard')"><i class="fas fa-chart-pie"></i> Dashboard</button>
+        <button class="tab" onclick="go('guests')"><i class="fas fa-users"></i> Guest Records</button>
+        <button class="tab" onclick="go('enquiries')"><i class="fas fa-envelope-open-text"></i> Enquiries</button>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-label">Total Guests</div><div class="stat-value">${guests.length}</div></div>
+        <div class="stat-card"><div class="stat-label">Total Enquiries</div><div class="stat-value">${enquiries.length}</div></div>
+        <div class="stat-card"><div class="stat-label">Lifestyle with Coco</div><div class="stat-value">${lwc}</div></div>
+        <div class="stat-card"><div class="stat-label">Morning Brew</div><div class="stat-value">${mbw}</div></div>
+        <div class="stat-card"><div class="stat-label">Government & You</div><div class="stat-value">${gov}</div></div>
+      </div>
+
+      <div class="action-bar">
+        <button class="btn btn-primary" onclick="exportGuests()"><i class="fas fa-file-excel"></i> Download All Guests</button>
+        <button class="btn btn-primary" onclick="exportEnquiries()"><i class="fas fa-file-excel"></i> Download All Enquiries</button>
+        <button class="btn btn-outline" onclick="renderDashboard()"><i class="fas fa-sync"></i> Refresh</button>
+        <button class="btn btn-outline" onclick="clearAll()"><i class="fas fa-trash"></i> Clear All Data</button>
+      </div>
+
+      <div class="page-header"><h1 style="font-size:1.2rem;">Recent Guests</h1></div>
+      <div class="table-container">
+        ${guests.length ? `
+          <table>
+            <thead><tr><th>Reference</th><th>Guest</th><th>Show</th><th>Date</th></tr></thead>
+            <tbody>
+              ${guests.slice(0, 10).map(g => `
+                <tr>
+                  <td>${escapeHtml(g.reference_number)}</td>
+                  <td>${escapeHtml(g.full_name)}</td>
+                  <td>${escapeHtml(g.show_name)}</td>
+                  <td>${escapeHtml((g.created_at || '').slice(0, 10)) || '—'}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        ` : `
+          <div class="empty">
+            <i class="fas fa-inbox"></i>
+            No guest records yet.
+          </div>
+        `}
+      </div>
+    `;
+  }
+
+  // ==============================
+  // GUESTS TABLE
+  // ==============================
+  function renderGuests() {
+    const guests = STORE.getGuests();
+
+    document.getElementById('adminContent').innerHTML = `
+      <div class="page-header"><h1>Guest Records</h1><p>All guest appearances.</p></div>
+
+      <div class="tabs">
+        <button class="tab" onclick="go('dashboard')"><i class="fas fa-chart-pie"></i> Dashboard</button>
+        <button class="tab active" onclick="go('guests')"><i class="fas fa-users"></i> Guest Records</button>
+        <button class="tab" onclick="go('enquiries')"><i class="fas fa-envelope-open-text"></i> Enquiries</button>
+      </div>
+
+      <div class="action-bar">
+        <button class="btn btn-primary" onclick="exportGuests()"><i class="fas fa-file-excel"></i> Download Excel</button>
+        <button class="btn btn-outline" onclick="renderGuests()"><i class="fas fa-sync"></i> Refresh</button>
+      </div>
+
+      <div class="table-container">
+        ${guests.length ? `
+          <table>
+            <thead>
+              <tr>
+                <th>Reference</th><th>Guest</th><th>Show</th><th>Age</th>
+                <th>Profession</th><th>Email</th><th>Phone</th><th>Commentary</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${guests.map(g => `
+                <tr>
+                  <td>${escapeHtml(g.reference_number)}</td>
+                  <td>${escapeHtml(g.full_name)}</td>
+                  <td>${escapeHtml(g.show_name)}</td>
+                  <td>${escapeHtml(g.guest_age)}</td>
+                  <td>${escapeHtml(g.profession)}</td>
+                  <td>${escapeHtml(g.guest_email || g.email || '')}</td>
+                  <td>${escapeHtml(g.guest_phone || g.phone || '')}</td>
+                  <td>${escapeHtml((g.topic || g.commentary || '').substring(0, 60))}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        ` : `
+          <div class="empty">
+            <i class="fas fa-user-slash"></i>
+            No guest records yet.
+          </div>
+        `}
+      </div>
+    `;
+  }
+
+  // ==============================
+  // ENQUIRIES TABLE
+  // ==============================
+  function renderEnquiries() {
+    const enquiries = STORE.getEnquiries();
+
+    document.getElementById('adminContent').innerHTML = `
+      <div class="page-header"><h1>Enquiries</h1><p>All enquiries submitted.</p></div>
+
+      <div class="tabs">
+        <button class="tab" onclick="go('dashboard')"><i class="fas fa-chart-pie"></i> Dashboard</button>
+        <button class="tab" onclick="go('guests')"><i class="fas fa-users"></i> Guest Records</button>
+        <button class="tab active" onclick="go('enquiries')"><i class="fas fa-envelope-open-text"></i> Enquiries</button>
+      </div>
+
+      <div class="action-bar">
+        <button class="btn btn-primary" onclick="exportEnquiries()"><i class="fas fa-file-excel"></i> Download Excel</button>
+        <button class="btn btn-outline" onclick="renderEnquiries()"><i class="fas fa-sync"></i> Refresh</button>
+      </div>
+
+      <div class="table-container">
+        ${enquiries.length ? `
+          <table>
+            <thead>
+              <tr>
+                <th>Reference</th><th>Name</th><th>Number</th>
+                <th>Email</th><th>Phone</th><th>Reason</th><th>Commentary</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${enquiries.map(en => `
+                <tr>
+                  <td>${escapeHtml(en.reference_number)}</td>
+                  <td>${escapeHtml(en.full_name)}</td>
+                  <td>${escapeHtml(en.guest_number)}</td>
+                  <td>${escapeHtml(en.email)}</td>
+                  <td>${escapeHtml(en.phone)}</td>
+                  <td>${escapeHtml(en.reason)}</td>
+                  <td>${escapeHtml((en.commentary || '').substring(0, 60))}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        ` : `
+          <div class="empty">
+            <i class="fas fa-envelope"></i>
+            No enquiries yet.
+          </div>
+        `}
+      </div>
+    `;
+  }
+
+  // ==============================
+  // NAV
+  // ==============================
+  function go(section) { window.location.hash = '#' + section; }
+  function clearAll() {
+    if (!confirm('Delete ALL guest records and enquiries? This cannot be undone.')) return;
+    localStorage.removeItem(STORE.GUESTS);
+    localStorage.removeItem(STORE.ENQUIRIES);
+    localStorage.removeItem('adc_seeded');
+    renderDashboard();
+  }
+
+  window.go = go;
+  window.logout = logout;
+  window.renderDashboard = renderDashboard;
+  window.renderGuests = renderGuests;
+  window.renderEnquiries = renderEnquiries;
+  window.renderLogin = renderLogin;
+  window.exportGuests = exportGuests;
+  window.exportEnquiries = exportEnquiries;
+  window.clearAll = clearAll;
+
+  window.addEventListener('hashchange', routeFromHash);
+
+  // ==============================
+  // EXCEL EXPORT
+  // ==============================
+  function writeExcel(rows, sheetName, filename) {
+    if (!rows.length) { alert('No ' + sheetName.toLowerCase() + ' to download.'); return; }
+    const clean = rows.map(({ id, ...rest }) => rest);
+    const ws = XLSX.utils.json_to_sheet(clean);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, sheetName);
+    XLSX.writeFile(wb, filename);
+  }
+
+  function exportGuests() {
+    writeExcel(STORE.getGuests(), 'Guests', 'ADC_Guests_' + new Date().toISOString().slice(0, 10) + '.xlsx');
+  }
+
+  function exportEnquiries() {
+    writeExcel(STORE.getEnquiries(), 'Enquiries', 'ADC_Enquiries_' + new Date().toISOString().slice(0, 10) + '.xlsx');
+  }
+
+  // ==============================
+  // INIT
+  // ==============================
+  (function init() {
+    if (isAdminLoggedIn) {
+      renderTopbarLoggedIn();
+      routeFromHash();
+    } else {
+      renderLogin();
+    }
+  })();
+</script>
+
+</body>
+</html>

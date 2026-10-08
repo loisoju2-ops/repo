@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+  <title>ADC · Guest Records & Enquiry System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:'Poppins',sans-serif; background:#000; color:#fff; line-height:1.5; }
+    :root {
+      --green:#0f6b3e; --green-light:#1e8a55; --green-soft:#1a3a2a;
+      --charcoal:#ffffff; --gray-text:#cfcfcf; --border:#2a2a2a; --white:#0a0a0a;
+      --shadow-sm:0 4px 12px rgba(0,0,0,.3); --shadow-md:0 8px 24px rgba(0,0,0,.5);
+      --radius-card:16px; --radius-btn:40px; --radius-input:12px;
+      --sidebar-width:260px;
+    }
+    a { text-decoration:none; color:inherit; }
+    button, .btn { font-family:'Poppins',sans-serif; cursor:pointer; border:none; transition:all .2s ease; }
+
+    .app-layout { display:flex; min-height:100vh; }
+
+    /* SIDEBAR */
+    .sidebar {
+      width:var(--sidebar-width); background:#0a0a0a; border-right:1px solid var(--border);
+      padding:24px 16px; display:flex; flex-direction:column; position:fixed;
+      top:0; left:0; height:100vh; overflow-y:auto; z-index:1000;
+    }
+    .sidebar-logo {
+      display:flex; align-items:center; justify-content:center;
+      padding:0 8px 24px; border-bottom:1px solid var(--border); margin-bottom:20px;
+    }
+    .logo-icon {
+      width:42px; height:42px; background:var(--green); color:#fff; border-radius:12px;
+      display:flex; align-items:center; justify-content:center; font-weight:700;
+      font-size:1.2rem; flex-shrink:0;
+    }
+    .logo-img img {
+      width: 150px;
+      height: 120px;
+      object-fit: contain;
+      transition: filter .2s ease;
+    }
+    .logo-img img:hover {
+      filter: drop-shadow(0 0 18px #909090);
+    }
+    .logo-text { font-weight:700; font-size:.95rem; color:#fff; line-height:1.2; }
+    .logo-text span { display:block; font-size:.6rem; font-weight:400; color:#cfcfcf; letter-spacing:1px; margin-top:2px; }
+
+    .sidebar-nav { display:flex; flex-direction:column; gap:4px; flex:1; }
+    .sidebar-nav a {
+      padding:12px 16px; border-radius:12px; color:#cfcfcf; font-weight:500;
+      font-size:.9rem; display:flex; align-items:center; gap:12px; transition:all .2s;
+    }
+    .sidebar-nav a i { width:20px; font-size:.95rem; color:#cfcfcf; flex-shrink:0; }
+    .sidebar-nav a:hover, .sidebar-nav a.active { background:var(--green-soft); color:#6ee7a5; }
+    .sidebar-nav a.active i, .sidebar-nav a:hover i { color:#6ee7a5; }
+
+    /* DROPDOWN */
+    .dropdown { position:relative; }
+    .dropdown-toggle {
+      display:flex; align-items:center; gap:12px; padding:12px 16px; border-radius:12px;
+      color:#cfcfcf; font-weight:500; font-size:.9rem; cursor:pointer;
+      transition:all .2s; width:100%; text-align:left; background:transparent; border:none;
+      font-family:'Poppins',sans-serif;
+    }
+    .dropdown-toggle i:first-child { width:20px; font-size:.95rem; color:#cfcfcf; flex-shrink:0; }
+    .dropdown-toggle .arrow { margin-left:auto; transition:transform .25s ease; font-size:.75rem; }
+    .dropdown.open .dropdown-toggle .arrow { transform:rotate(180deg); }
+    .dropdown-toggle:hover, .dropdown.open .dropdown-toggle { background:var(--green-soft); color:#6ee7a5; }
+    .dropdown-toggle:hover i, .dropdown.open .dropdown-toggle i { color:#6ee7a5; }
+
+    .dropdown-menu { display:none; flex-direction:column; gap:2px; padding-left:16px; margin-top:4px; }
+    .dropdown.open .dropdown-menu { display:flex; }
+    .dropdown-menu a {
+      padding:10px 16px; font-size:.85rem; border-radius:10px; display:flex;
+      align-items:center; gap:10px; color:#cfcfcf; transition:all .2s;
+    }
+    .dropdown-menu a i { width:18px; font-size:.85rem; }
+    .dropdown-menu a:hover, .dropdown-menu a.active { background:var(--green-soft); color:#6ee7a5; }
+    .dropdown-menu a:hover i, .dropdown-menu a.active i { color:#6ee7a5; }
+
+    .nav-divider { height:1px; background:var(--border); margin:12px 8px; }
+    .nav-label {
+      font-size:.65rem; text-transform:uppercase; letter-spacing:1.2px;
+      color:#808080; padding:8px 16px 4px; font-weight:600;
+    }
+
+    /* MAIN */
+    .main-content {
+      flex:1; margin-left:var(--sidebar-width); padding:0; min-height:100vh;
+      display:flex; flex-direction:column; background:#000;
+    }
+    #pageContent { width:100%; margin:0; padding:0; }
+
+    /* MOBILE */
+    .mobile-toggle {
+      display:none; position:fixed; top:16px; left:16px; z-index:1100;
+      background:var(--green); color:white; width:44px; height:44px; border-radius:12px;
+      font-size:1.2rem; align-items:center; justify-content:center; box-shadow:var(--shadow-md);
+    }
+    .sidebar-overlay {
+      display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:999;
+    }
+
+    /* HERO SLIDER */
+    .adc-hero-slider{position:relative;width:100%;min-height:560px;overflow:hidden;margin:0;background:#000;color:#fff}
+    .adc-hero-track{display:flex;width:100%;transition:transform .65s ease}
+    .adc-hero-slide{min-width:100%;min-height:560px;position:relative;display:flex;align-items:center;padding:70px 8%;box-sizing:border-box;background-size:cover;background-repeat:no-repeat;background-position:center;background-color:#000}
+    .adc-hero-slide:nth-child(1){background-image:url('images/f68b1ea6-302e-4a88-b583-2807debc5036.png')}
+    .adc-hero-slide:nth-child(2){background-image:url('images/ChatGPT Image Sep 22, 2026, 12_26_32 PM.png')}
+    .adc-hero-slide:nth-child(3){background-image:url('images/0CB61F31-5089-41B3-A7EA-8CA3CD6FA968.png')}
+    .adc-hero-slide:nth-child(4){background-image:url('images/Top Questions to Ask When Hiring an Accountant for Your Gloucester County Business - TMD Accounting.jpg')}
+    .adc-hero-overlay{position:absolute;inset:0;background:linear-gradient(90deg,rgba(0,0,0,.72),rgba(0,0,0,.28));pointer-events:none}
+    .adc-hero-arrow{position:absolute;z-index:5;top:50%;transform:translateY(-50%);width:44px;height:44px;border-radius:50%;border:1px solid rgba(255,255,255,.4);background:rgba(0,0,0,.4);color:#fff;font-size:22px;cursor:pointer}
+    .adc-hero-arrow:hover{background:rgba(0,0,0,.7)}
+    .adc-hero-prev{left:18px}.adc-hero-next{right:18px}
+    .adc-hero-dots{position:absolute;z-index:5;left:50%;bottom:18px;transform:translateX(-50%);display:flex;gap:8px}
+    .adc-hero-dot{width:9px;height:9px;border:0;border-radius:50%;background:rgba(255,255,255,.5);cursor:pointer;padding:0}
+    .adc-hero-dot.active{background:#fff;transform:scale(1.25)}
+    .adc-hero-fill-btn{position:absolute;z-index:6;bottom:28px;left:32px;padding:14px 32px;border-radius:40px;background:var(--green);color:#fff;font-weight:600;font-size:1rem;letter-spacing:.5px;border:none;cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,.35);transition:all .2s ease;display:inline-flex;align-items:center;gap:10px}
+    .adc-hero-fill-btn:hover{background:#0b5a33;transform:translateY(-2px)}
+
+    /* FORMS */
+    .form-card {
+      background:#111; border-radius:var(--radius-card); box-shadow:var(--shadow-md);
+      padding:36px 32px; border:1px solid var(--border); max-width:900px;
+      margin:40px auto; width:calc(100% - 64px); color:#fff;
+    }
+    .form-card .form-header {
+      margin-bottom:28px; padding-bottom:20px; border-bottom:1px solid var(--border);
+    }
+    .form-card .form-header h2 { font-size:1.6rem; font-weight:600; color:#fff; margin-bottom:6px; }
+    .form-card .form-header .badge {
+      display:inline-block; padding:6px 16px; border-radius:40px; font-size:.8rem;
+      font-weight:500; background:var(--green-soft); color:#6ee7a5;
+    }
+    .form-card .form-header .badge.lifestyle { background:#3a2a1a; color:#f5a55a; }
+    .form-card .form-header .badge.morning { background:#1a2a3a; color:#5aa9f5; }
+    .form-card .form-header .badge.gov { background:#2a1a3a; color:#c77df0; }
+
+    .form-section { margin-bottom:28px; }
+    .form-section h3 { font-size:1.05rem; font-weight:600; margin-bottom:18px; color:#fff; display:flex; align-items:center; gap:10px; }
+    .form-section h3 i { color:#6ee7a5; font-size:.95rem; width:20px; }
+
+    .form-row { display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-bottom:4px; }
+    .form-group { display:flex; flex-direction:column; margin-bottom:14px; }
+    .form-group label { font-size:.85rem; font-weight:500; margin-bottom:6px; color:#e6e6e6; }
+    .form-group label .required { color:#ff6b6b; margin-left:3px; }
+    .form-control {
+      width:100%; padding:13px 16px; border:1.5px solid var(--border);
+      border-radius:var(--radius-input); font-family:'Poppins',sans-serif;
+      font-size:.9rem; background:#1a1a1a; color:#fff; transition:.2s;
+    }
+    .form-control::placeholder { color:#888; }
+    .form-control:focus { outline:none; border-color:var(--green); box-shadow:0 0 0 4px rgba(15,107,62,.25); background:#0f0f0f; }
+    textarea.form-control { min-height:100px; resize:vertical; }
+    select.form-control {
+      appearance:none;
+      background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23cfcfcf' stroke-width='2'><polyline points='6 9 12 15 18 9'/></svg>");
+      background-repeat:no-repeat; background-position:right 16px center; padding-right:40px;
+      background-color:#1a1a1a; color:#fff;
+    }
+    select.form-control option { background:#1a1a1a; color:#fff; }
+
+    .form-footer {
+      display:flex; justify-content:flex-end; gap:14px; margin-top:24px;
+      padding-top:20px; border-top:1px solid var(--border); flex-wrap:wrap;
+    }
+
+    /* BUTTONS */
+    .btn-primary {
+      background:var(--green); color:#fff; padding:12px 28px; border-radius:var(--radius-btn);
+      font-weight:500; font-size:.9rem; display:inline-flex; align-items:center;
+      gap:8px; box-shadow:0 6px 14px rgba(15,107,62,.35);
+    }
+    .btn-primary:hover { background:#0b5a33; transform:translateY(-1px); }
+    .btn-outline {
+      background:transparent; border:1.5px solid var(--green); color:#6ee7a5;
+      padding:10px 24px; border-radius:var(--radius-btn); font-weight:500;
+      font-size:.9rem; display:inline-flex; align-items:center; gap:8px;
+    }
+    .btn-outline:hover { background:var(--green-soft); }
+
+    /* SUCCESS */
+    .success-card {
+      max-width:580px; margin:60px auto; background:#111;
+      border-radius:var(--radius-card); padding:48px 36px; box-shadow:var(--shadow-md);
+      text-align:center; border:1px solid var(--border); color:#fff;
+    }
+    .success-card i { font-size:3rem; color:#6ee7a5; margin-bottom:20px; }
+    .success-card h2 { font-size:1.6rem; margin-bottom:12px; color:#fff; }
+    .success-card .ref-box {
+      background:var(--green-soft); padding:16px; border-radius:12px;
+      margin:20px 0; font-size:1.15rem; font-weight:700; letter-spacing:1px; color:#6ee7a5;
+    }
+
+    /* FOOTER */
+    .app-footer {
+      margin-top:auto; padding:18px 24px; border-top:1px solid var(--border);
+      text-align:center; font-size:.8rem; color:#cfcfcf; background:#000;
+    }
+    .app-footer a { color:#6ee7a5; font-weight:500; }
+
+    /* ADMIN TABLE */
+    .stats-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(170px,1fr)); gap:18px; margin:0 32px 24px; }
+    .stat-card { background:#111; border-radius:var(--radius-card); padding:22px 18px; border:1px solid var(--border); box-shadow:var(--shadow-sm); }
+    .stat-card .stat-label { font-size:.8rem; color:#cfcfcf; margin-bottom:6px; }
+    .stat-card .stat-value { font-size:1.9rem; font-weight:700; color:#fff; }
+    .table-container { background:#111; border-radius:var(--radius-card); border:1px solid var(--border); overflow-x:auto; box-shadow:var(--shadow-sm); margin:0 32px 24px; }
+    table { width:100%; border-collapse:collapse; min-width:760px; }
+    th { text-align:left; padding:16px 14px; background:#1a1a1a; font-weight:600; font-size:.75rem; color:#cfcfcf; text-transform:uppercase; letter-spacing:.4px; border-bottom:1px solid var(--border); }
+    td { padding:14px; border-bottom:1px solid #222; font-size:.85rem; color:#e6e6e6; }
+    .status-badge { display:inline-block; padding:5px 12px; border-radius:40px; font-size:.7rem; font-weight:600; text-transform:capitalize; white-space:nowrap; }
+    .status-completed { background:#1a3a2a; color:#6ee7a5; }
+    .status-new { background:#1a2a3a; color:#5aa9f5; }
+
+    .page-header { padding:28px 32px 18px; margin:0; }
+    .page-header h1 { font-size:2rem; font-weight:700; color:#fff; margin-bottom:6px; }
+    .page-header p { color:#cfcfcf; font-size:.95rem; max-width:680px; }
+
+    .hidden { display:none !important; }
+    .text-muted { color:#cfcfcf; }
+
+    @media (max-width:768px) {
+      .mobile-toggle { display:flex; }
+      .sidebar { transform:translateX(-100%); transition:transform .25s ease; width:280px; }
+      .sidebar.open { transform:translateX(0); }
+      .sidebar-overlay.open { display:block; }
+      .main-content { margin-left:0; }
+      .form-card { padding:24px 18px; width:calc(100% - 24px); margin:80px 12px 40px; }
+      .form-row { grid-template-columns:1fr; gap:0; }
+      .form-footer { flex-direction:column; }
+      .form-footer .btn { width:100%; justify-content:center; }
+      .page-header { padding:76px 18px 18px; }
+      .stats-grid, .table-container { margin-left:12px; margin-right:12px; }
+      .adc-hero-slider,.adc-hero-slide { min-height:400px; }
+      .adc-hero-fill-btn { bottom:20px; left:20px; padding:12px 24px; font-size:.9rem; }
+      .logo-img img { width:120px; height:100px; }
+    }
+    @media (max-width:480px) {
+      .logo-text span { display:none; }
+    }
+  </style>
+</head>
+<body>
+
+<button class="mobile-toggle" onclick="toggleSidebar()" aria-label="Toggle menu">
+  <i class="fas fa-bars"></i>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="app-layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-img">
+        <img src="images\African Diaspora Channels Logo.png" alt="ADC Logo">
+      </div>
+    </div>
+
+    <nav class="sidebar-nav" id="sidebarNav">
+      <div class="dropdown" id="formsDropdown">
+        <button class="dropdown-toggle" type="button" id="formsDropdownToggle">
+          <i class="fas fa-file-alt"></i> Forms
+          <i class="fas fa-chevron-down arrow"></i>
+        </button>
+        <div class="dropdown-menu">
+          <a href="lifestyle-with-coco.html">
+            <i class="fas fa-heart"></i> Lifestyle with Coco
+          </a>
+          <a href="morning-brew.html">
+            <i class="fas fa-coffee"></i> Morning Brew
+          </a>
+          <a href="government-and-you.html">
+            <i class="fas fa-landmark"></i> The Government and You
+          </a>
+          <a href="enquiries.html">
+            <i class="fas fa-envelope"></i> Enquiries
+          </a>
+        </div>
+      </div>
+
+      <div class="nav-divider"></div>
+      <div class="nav-label">Admin</div>
+
+      <a href="admin.html">
+        <i class="fas fa-lock"></i> Admin Login
+      </a>
+      <a href="admin.html#dashboard">
+        <i class="fas fa-chart-pie"></i> Dashboard
+      </a>
+      <a href="admin.html#guests">
+        <i class="fas fa-users"></i> Guest Records
+      </a>
+      <a href="admin.html#enquiries">
+        <i class="fas fa-envelope-open-text"></i> All Enquiries
+      </a>
+    </nav>
+  </aside>
+
+  <main class="main-content" id="mainContent">
+    <div id="pageContent">
+      <div class="adc-hero-slider" id="adcHeroSlider">
+        <div class="adc-hero-track" id="adcHeroTrack">
+          <section class="adc-hero-slide"><div class="adc-hero-overlay"></div></section>
+          <section class="adc-hero-slide"><div class="adc-hero-overlay"></div></section>
+          <section class="adc-hero-slide"><div class="adc-hero-overlay"></div></section>
+          <section class="adc-hero-slide"><div class="adc-hero-overlay"></div></section>
+        </div>
+        <button class="adc-hero-arrow adc-hero-prev" type="button" onclick="adcHeroMove(-1)">&#10094;</button>
+        <button class="adc-hero-arrow adc-hero-next" type="button" onclick="adcHeroMove(1)">&#10095;</button>
+        <div class="adc-hero-dots" id="adcHeroDots">
+          <button class="adc-hero-dot active" type="button" onclick="adcHeroGo(0)"></button>
+          <button class="adc-hero-dot" type="button" onclick="adcHeroGo(1)"></button>
+          <button class="adc-hero-dot" type="button" onclick="adcHeroGo(2)"></button>
+          <button class="adc-hero-dot" type="button" onclick="adcHeroGo(3)"></button>
+        </div>
+        <button class="adc-hero-fill-btn" type="button" onclick="window.location.href='enquiries.html'">
+          <i class="fas fa-pen"></i> Fill Form
+        </button>
+      </div>
+    </div>
+
+    <footer class="app-footer">
+      <p>
+        <strong>African Diaspora Channels</strong> — Connecting stories, people and communities.
+        &nbsp;|&nbsp; <a href="enquiries.html">Contact</a>
+        &nbsp;|&nbsp; © 2026 ADC. All Rights Reserved.
+      </p>
+    </footer>
+  </main>
+</div>
+
+<!-- DROPDOWN CONTROLLER -->
+<script>
+(function () {
+  function initDropdown() {
+    var dropdown = document.getElementById('formsDropdown');
+    var toggle = document.getElementById('formsDropdownToggle');
+    if (!dropdown || !toggle) return;
+
+    toggle.addEventListener('click', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      dropdown.classList.toggle('open');
+    });
+
+    dropdown.querySelectorAll('.dropdown-menu a').forEach(function (link) {
+      link.addEventListener('click', function () {
+        dropdown.classList.remove('open');
+      });
+    });
+
+    document.addEventListener('click', function (e) {
+      if (!dropdown.contains(e.target)) dropdown.classList.remove('open');
+    });
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') dropdown.classList.remove('open');
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initDropdown);
+  } else {
+    initDropdown();
+  }
+})();
+</script>
+
+<!-- HERO SLIDER -->
+<script>
+(function(){
+  let idx = 0, timer = null;
+  function render(){
+    const track = document.getElementById('adcHeroTrack');
+    const dots = document.querySelectorAll('#adcHeroDots .adc-hero-dot');
+    if (!track) return;
+    track.style.transform = 'translateX(-' + (idx * 100) + '%)';
+    dots.forEach((d,i) => d.classList.toggle('active', i === idx));
+  }
+  window.adcHeroGo = function(i){ idx = (i + 4) % 4; render(); restart(); };
+  window.adcHeroMove = function(d){ idx = (idx + d + 4) % 4; render(); restart(); };
+  function restart(){
+    clearInterval(timer);
+    timer = setInterval(function(){ idx = (idx + 1) % 4; render(); }, 5000);
+  }
+  document.addEventListener('DOMContentLoaded', function(){
+    render(); restart();
+    const slider = document.getElementById('adcHeroSlider');
+    if (slider) {
+      slider.addEventListener('mouseenter', () => clearInterval(timer));
+      slider.addEventListener('mouseleave', restart);
+    }
+  });
+})();
+</script>
+
+<!-- SIDEBAR MOBILE TOGGLE -->
+<script>
+  function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+  }
+</script>
+
+</body>
+</html>
